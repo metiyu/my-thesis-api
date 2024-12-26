@@ -5,7 +5,7 @@ https://docs.nestjs.com/controllers#controllers
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { StocksService } from './stocks.service';
-import { ConsistentStock, Stock } from './stock.entity';
+import { AnalyzedStock, ConsistentStock, Stock } from './stock.entity';
 
 @ApiTags('stocks')
 @Controller('stocks')
@@ -30,7 +30,7 @@ export class StocksController {
         description: 'Get individual stock analysis with Mean Return, Volatility, Sharpe Ratio, Skewness, Kurtosis data.',
         type: Stock,
     })
-    async getStocksAnalysis(): Promise<StockAnalysis> {
+    async getStocksAnalysis(): Promise<AnalyzedStock> {
         return this.stocksService.getStocksAnalysis()
     }
 

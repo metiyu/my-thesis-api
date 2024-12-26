@@ -3,7 +3,7 @@ https://docs.nestjs.com/providers#services
 */
 
 import { Injectable } from '@nestjs/common';
-import { ConsistentStock, Stock } from './stock.entity';
+import { AnalyzedStock, ConsistentStock, Stock } from './stock.entity';
 import { StockDto } from './stock.dto';
 import { PythonService } from 'src/python/python.service';
 
@@ -19,17 +19,10 @@ export class StocksService {
         return result;
     }
 
-    async getStocksAnalysis(
-        options: StockDto,
-    ): Promise<Stock> {
+    async getStocksAnalysis(): Promise<AnalyzedStock> {
         const result = await this.pythonService.executePythonScript(
             'individual_stock_analysis.py',
-            [
-                options.symbol,
-                options.startDate,
-                options.endDate || new Date().toISOString(),
-                options.timeFrame,
-            ],
+            [],
         );
         return result;
     }

@@ -41,3 +41,23 @@ export class ConsistentStock {
     @ApiProperty()
     ticker: string;
 }
+
+export class AnalyzedStock {
+    @ApiProperty()
+    ticker: string;
+
+    @ApiProperty()
+    meanReturn: number;
+
+    @ApiProperty()
+    volatility: number;
+
+    @ApiProperty()
+    sharpeRatio: number;
+
+    @ApiProperty()
+    skewness: number;
+
+    @ApiProperty()
+    kurtosis: number;
+}

@@ -4,13 +4,19 @@ https://docs.nestjs.com/providers#services
 
 import { Injectable } from '@nestjs/common';
 import { spawn } from 'child_process';
+import * as path from 'path';
 
 @Injectable()
 export class PythonService {
 	async executePythonScript(scriptName: string, args: string[]): Promise<any> {
 		return new Promise((resolve, reject) => {
-			console.log(`${process.cwd()}/script/${scriptName}`);
-			const pythonProcess = spawn('python', [
+			const venvPath = path.join(
+                process.cwd(),
+                'venv', // Name of the venv directory
+                'Scripts',  // Use 'Scripts' instead of 'bin' on Windows
+                'python'
+            );
+			const pythonProcess = spawn(venvPath, [
 				`${process.cwd()}/script/${scriptName}`,
 				...args,
 			]);

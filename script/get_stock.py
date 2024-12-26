@@ -72,6 +72,7 @@ class LQ45Analyzer:
 
 # Contoh penggunaan
 summary_df = pd.read_csv('../my-thesis-api/script/dataset/summary.csv')
+# summary_df = pd.read_csv('./dataset/summary.csv')
 lq45_compositions = summary_df.to_dict(orient='records')
 
 analyzer = LQ45Analyzer(lq45_compositions)
