@@ -2,15 +2,17 @@
 https://docs.nestjs.com/controllers#controllers
 */
 
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { StocksService } from './stocks.service';
 import { AnalyzedStock, ConsistentStock, Stock } from './stock.entity';
+import { AnalyzeStocksDto } from './analyze-stocks.dto';
+import { OptimizePortfolioDto } from './optimize-portfolio.dto';
 
 @ApiTags('stocks')
 @Controller('stocks')
 export class StocksController {
-    constructor(private readonly stocksService: StocksService) {}
+    constructor(private readonly stocksService: StocksService) { }
 
     @Get('consistency')
     @ApiOperation({ summary: 'Get consistent stocks' })
@@ -24,14 +26,65 @@ export class StocksController {
     }
 
     @Get('individual-analysis')
-    @ApiOperation({ summary: 'Get individual stocks analysis' })
+    @ApiOperation({ summary: 'Analyze individual stocks with custom metrics' })
+    @ApiQuery({ name: 'tickers', type: String, isArray: true, description: 'List of stock tickers (e.g. BBCA.JK, BBRI.JK) - Please using ".JK" for Indonesian Stocks' })
+    @ApiQuery({ name: 'startDate', type: String, description: 'Start date in YYYY-MM-DD format' })
+    @ApiQuery({ name: 'endDate', type: String, description: 'End date in YYYY-MM-DD format' })
+    @ApiQuery({ name: 'metrics', type: String, isArray: true, required: false, description: 'Metrics to include (Mean Return, Volatility, Sharpe Ratio, Skewness, Kurtosis)' })
     @ApiResponse({
         status: 200,
-        description: 'Get individual stock analysis with Mean Return, Volatility, Sharpe Ratio, Skewness, Kurtosis data.',
-        type: Stock,
+        description: 'Returns analysis results for each ticker.',
+        example: {
+            "BBCA.JK": {
+                "Mean Return": 0.000326,
+                "Volatility": 0.01403,
+                "Sharpe Ratio": 0.02326,
+                "Skewness": 0.2575,
+                "Kurtosis": 0.5751
+            },
+            "BBRI.JK": {
+                "Mean Return": -0.000935,
+                "Volatility": 0.01819,
+                "Sharpe Ratio": -0.05141,
+                "Skewness": -0.1326,
+                "Kurtosis": 0.3346
+            }
+        }
     })
-    async getStocksAnalysis(): Promise<AnalyzedStock> {
-        return this.stocksService.getStocksAnalysis()
+    @ApiResponse({
+        status: 400,
+        description: 'Bad request or invalid parameters.',
+        example: {
+            "error": "Start date cannot be after end date."
+        }
+    })
+    async analyzeIndividualStocks(
+        @Query() dto: AnalyzeStocksDto
+    ): Promise<any> {
+        return this.stocksService.analyzeIndividualStocks(dto);
+    }
+
+    @Post('optimize-portfolio')
+    @ApiOperation({ summary: 'Optimize portfolio based on selected strategy' })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns optimized portfolio weights.',
+        example: {
+            "weights": [0.4, 0.6],
+            "total_weight": 1.0
+        }
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Bad request or invalid parameters.',
+        example: {
+            "error": "Start date cannot be after end date."
+        }
+    })
+    async optimizePortfolio(
+        @Body() dto: OptimizePortfolioDto
+    ): Promise<any> {
+        return this.stocksService.optimizePortfolio(dto);
     }
 
 }
