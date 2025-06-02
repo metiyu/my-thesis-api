@@ -2,11 +2,9 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 from scipy import stats
-from scipy.optimize import minimize
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import datetime, timedelta
 import json
+import sys
+import ast
 
 class PortfolioAnalyzer:
     def __init__(self, start_date, end_date):
@@ -26,24 +24,14 @@ class PortfolioAnalyzer:
                         data[ticker] = returns
                         valid_tickers.append(ticker)
             except Exception as e:
-                print(f"Error {ticker}: {e}")
+                print(f"Error {ticker}: {e}", file=sys.stderr)  # Print errors to stderr
 
         data = data.dropna()
         return data, valid_tickers
 
     def analyze_individual_stocks(self, returns_data):
-        # metrics = pd.DataFrame()
         metrics = []
 
-        # for col in returns_data.columns:
-        #     returns = returns_data[col]
-        #     metrics.loc[col, 'Mean Return'] = returns.mean()
-        #     metrics.loc[col, 'Volatility'] = returns.std()
-        #     metrics.loc[col, 'Sharpe Ratio'] = returns.mean() / returns.std()
-        #     metrics.loc[col, 'Skewness'] = stats.skew(returns)
-        #     metrics.loc[col, 'Kurtosis'] = stats.kurtosis(returns)
-
-        # return metrics.sort_values('Sharpe Ratio', ascending=False)
         for col in returns_data.columns:
             returns = returns_data[col]
             mean_return = returns.mean()
@@ -54,31 +42,41 @@ class PortfolioAnalyzer:
 
             metrics.append({
                 "ticker": col,
-                "Mean Return": mean_return,
-                "Volatility": volatility,
-                "Sharpe Ratio": sharpe_ratio,
-                "Skewness": skewness,
-                "Kurtosis": kurtosis
+                "Mean Return": float(mean_return),  # Convert to Python float
+                "Volatility": float(volatility),
+                "Sharpe Ratio": float(sharpe_ratio) if not np.isnan(sharpe_ratio) else None,
+                "Skewness": float(skewness),
+                "Kurtosis": float(kurtosis)
             })
 
         return metrics
 
 def run_portfolio_analysis(tickers, start_date, end_date):
+    print(tickers)
     analyzer = PortfolioAnalyzer(start_date, end_date)
     returns_data, valid_tickers = analyzer.get_data(tickers)
     stock_metrics = analyzer.analyze_individual_stocks(returns_data)
     return {
-        'returns_data': returns_data,
         'stock_metrics': stock_metrics,
     }
 
-lq45_tickers = pd.read_csv('../my-thesis-api/script/dataset/consistent_lq45_stocks.csv')['ticker']
-# lq45_tickers = pd.read_csv('./dataset/consistent_lq45_stocks.csv')['ticker']
+# Parse command line arguments
+if len(sys.argv) >= 4:
+    # Parse the ticker list from string representation
+    tickers_str = sys.argv[1]
+    try:
+        tickers = ast.literal_eval(tickers_str)  # Safely parse the list string
+    except:
+        tickers = [tickers_str]  # If it's just a single ticker
+    
+    start_date = sys.argv[2]
+    end_date = sys.argv[3]
+else:
+    # Fallback to default values
+    lq45_tickers = pd.read_csv('./dataset/consistent_lq45_stocks.csv')['ticker']
+    tickers = lq45_tickers.tolist()
+    start_date = '2019-09-01'
+    end_date = '2024-09-01'
 
-# Periode analisis
-start_date = '2019-09-01'
-end_date = '2024-09-01'
-
-results = run_portfolio_analysis(lq45_tickers, start_date, end_date)
-# print(results['stock_metrics'].to_json(orient="index", indent=4))
+results = run_portfolio_analysis(tickers, start_date, end_date)
 print(json.dumps(results['stock_metrics'], indent=4))
