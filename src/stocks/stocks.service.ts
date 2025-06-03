@@ -8,6 +8,8 @@ import { StockDto } from './stock.dto';
 import { PythonService } from 'src/python/python.service';
 import { AnalyzeStocksDto } from './analyze-stocks.dto';
 import { OptimizePortfolioDto } from './optimize-portfolio.dto';
+import { EfficientFrontierDto } from './efficient-frontier.dto';
+import { MonteCarloDto } from './monte-carlo.dto';
 
 @Injectable()
 export class StocksService {
@@ -74,5 +76,46 @@ export class StocksService {
             weights,
             total_weight: weights.reduce((sum, w) => sum + w, 0)
         };
+    }
+
+    async generateEfficientFrontier(dto: EfficientFrontierDto): Promise<any> {
+        const args = [
+            JSON.stringify(dto.tickers),
+            dto.start_date,
+            dto.end_date,
+            dto.n_points.toString()
+        ];
+
+        const result = await this.pythonService.executePythonScript(
+            'efficient_frontier.py',
+            args
+        );
+
+        if (typeof result === 'object' && 'error' in result) {
+            throw new HttpException(result, HttpStatus.BAD_REQUEST);
+        }
+
+        return result;
+    }
+
+    async runMonteCarloSimulation(dto: MonteCarloDto): Promise<any> {
+        const args = [
+            JSON.stringify(dto.tickers),
+            dto.start_date,
+            dto.end_date,
+            dto.n_simulations.toString(),
+            JSON.stringify(dto.strategies)
+        ];
+
+        const result = await this.pythonService.executePythonScript(
+            'monte_carlo_simulation.py',
+            args
+        );
+
+        if (typeof result === 'object' && 'error' in result) {
+            throw new HttpException(result, HttpStatus.BAD_REQUEST);
+        }
+
+        return result;
     }
 }

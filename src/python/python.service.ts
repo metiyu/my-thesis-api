@@ -82,24 +82,35 @@ export class PythonService {
 		return new Promise((resolve, reject) => {
 			const scriptPath = path.resolve(process.cwd(), 'script', scriptName);
 			const venvPath = path.resolve(process.cwd(), 'venv');
-			const activateScript = path.join(venvPath, 'Scripts', 'activate.bat');
+			// const activateScript = path.join(venvPath, 'Scripts', 'activate.bat');
+			const pythonExecutable = path.join(venvPath, 'Scripts', 'python.exe');
 
-			// Properly format the arguments - escape quotes for the ticker array
-			const formattedArgs = args.map(arg => {
-				if (arg.startsWith('[') && arg.endsWith(']')) {
-					return `"${arg}"`;  // Wrap array string in quotes
-				}
-				return arg;
-			}).join(' ');
+			// // Properly format the arguments - escape quotes for the ticker array
+			// const formattedArgs = args.map(arg => {
+			// 	if (arg.startsWith('[') && arg.endsWith(']')) {
+			// 		return `"${arg}"`;  // Wrap array string in quotes
+			// 	}
+			// 	return arg;
+			// }).join(' ');
 
-			const command = `"${activateScript}" && python "${scriptPath}" ${formattedArgs}`;
+			// const command = `"${activateScript}" && python "${scriptPath}" ${formattedArgs}`;
+			// const command = `"${pythonExecutable}" "${scriptPath}" ${formattedArgs}`;
 
-			console.log('Running command:', command);
+			// console.log('Running command:', command);
 
-			const pythonProcess = spawn('cmd', ['/c', command], {
+			// const pythonProcess = spawn('cmd', ['/c', command], {
+			// 	cwd: process.cwd(),
+			// 	shell: true
+			// });
+
+			// Construct full argument array: [scriptPath, ...args]
+			const fullArgs = [scriptPath, ...args];
+
+			const pythonProcess = spawn(pythonExecutable, fullArgs, {
 				cwd: process.cwd(),
-				shell: true
 			});
+
+			console.log('Running script:', pythonProcess.spawnargs.join(' '));
 
 			let result = '';
 			let errorOutput = '';

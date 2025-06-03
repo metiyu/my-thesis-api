@@ -3,11 +3,13 @@ https://docs.nestjs.com/controllers#controllers
 */
 
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { StocksService } from './stocks.service';
 import { AnalyzedStock, ConsistentStock, Stock } from './stock.entity';
 import { AnalyzeStocksDto } from './analyze-stocks.dto';
 import { OptimizePortfolioDto } from './optimize-portfolio.dto';
+import { EfficientFrontierDto } from './efficient-frontier.dto';
+import { MonteCarloDto } from './monte-carlo.dto';
 
 @ApiTags('stocks')
 @Controller('stocks')
@@ -87,4 +89,57 @@ export class StocksController {
         return this.stocksService.optimizePortfolio(dto);
     }
 
+    @Post('efficient-frontier')
+    @ApiOperation({ summary: 'Generate efficient frontier based on historical returns' })
+    @ApiBody({ type: EfficientFrontierDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns a list of points on the efficient frontier.',
+        example: [{
+            "return": 0.0012,
+            "risk": 0.0189,
+            "weights": [0.3, 0.7]
+        }]
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Bad request or invalid parameters.',
+        example: {
+            "error": "Start date cannot be after end date."
+        }
+    })
+    async generateEfficientFrontier(
+        @Body() dto: EfficientFrontierDto
+    ): Promise<any> {
+        return this.stocksService.generateEfficientFrontier(dto);
+    }
+
+    @Post('monte-carlo-simulation')
+    @ApiOperation({ summary: 'Run Monte Carlo simulation to compare portfolio strategies' })
+    @ApiBody({ type: MonteCarloDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns a list of Monte Carlo simulation results.',
+        example: [{
+            "simulation_id": 0,
+            "strategy": "modified_sharpe",
+            "mean_return": 0.0012,
+            "volatility": 0.0189,
+            "sharpe_ratio": 0.063,
+            "cvar": 0.021,
+            "weights": [0.3, 0.7]
+        }]
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Bad request or invalid parameters.',
+        example: {
+            "error": "Start date cannot be after end date."
+        }
+    })
+    async runMonteCarloSimulation(
+        @Body() dto: MonteCarloDto
+    ): Promise<any> {
+        return this.stocksService.runMonteCarloSimulation(dto);
+    }
 }

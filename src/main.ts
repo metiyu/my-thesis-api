@@ -12,18 +12,10 @@ async function bootstrap() {
         .setDescription('Stock Portfolio Optimization on LQ45 Index Using Historical VaR and Non-Parametric CVaR')
         .setVersion('1.0')
         .addTag('stocks', 'Stock market data and analysis')
-        .addTag('indicators', 'Technical indicators and patterns')
+        .addTag('portofolio', 'Portfolio optimization and risk management')
         .addTag('predictions', 'Market predictions and forecasts')
         .build();
 
-    // Add document here
-    const adminDocument = SwaggerModule.createDocument(app, config, {
-        include: [
-
-        ],
-    });
-    SwaggerModule.setup('api/admin', app, adminDocument);
-    
 	const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);
 
