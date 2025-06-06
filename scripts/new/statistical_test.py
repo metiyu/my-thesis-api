@@ -6,17 +6,11 @@ import pandas as pd
 from scipy import stats
 import traceback
 
-def perform_statistical_test(monte_carlo_data):
+def perform_statistical_test(monte_carlo_results):
     results = []
     
-    # Extract simulation_results from the nested structure
-    if 'simulation_results' in monte_carlo_data:
-        simulation_results = monte_carlo_data['simulation_results']
-    else:
-        simulation_results = monte_carlo_data
-    
     # Convert to DataFrame
-    df = pd.DataFrame(simulation_results)
+    df = pd.DataFrame(monte_carlo_results)
     
     # Debug: Print DataFrame info
     print(f"DataFrame shape: {df.shape}", file=sys.stderr)
@@ -115,7 +109,7 @@ if __name__ == '__main__':
             params = json.load(f)
         
         # Get monte carlo results
-        monte_carlo_results = params.get('monteCarloResults', {})
+        monte_carlo_results = params.get('monteCarloResults', {}).get('simulation_results', [])
         
         if not monte_carlo_results:
             raise ValueError("monteCarloResults are required")

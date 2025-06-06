@@ -6,6 +6,11 @@ import { DownloadDataDto } from './dto/download-data.dto';
 import { IndividualStockAnalysisDto } from './dto/individual-stock.dto';
 import { OptimizePortfolioDto } from './dto/optimize-portfolio.dto';
 import { EfficientFrontierDto } from './dto/efficient-frontier.dto';
+import { MonteCarloSimulationDto } from './dto/monte-carlo.dto';
+import { StatisticalTestDto } from './dto/statistical-test.dto';
+import { ExtremeCaseAnalysisDto } from './dto/extreme-case.dto';
+import { BenchmarkDto } from './dto/benchmark.dto';
+import { StatisticalTestResponseDto } from './dto/statistical-test-response.dto';
 
 @Injectable()
 export class PortfolioService {
@@ -27,19 +32,19 @@ export class PortfolioService {
         return this.pythonService.executePythonScript('generate_efficient_frontier.py', [dto]);
     }
 
-    async monteCarloSimulation(dto: any) {
+    async monteCarloSimulation(dto: MonteCarloSimulationDto): Promise<any> {
         return this.pythonService.executePythonScript('monte_carlo_simulation.py', [dto]);
     }
 
-    async performStatisticalTest(dto: any) {
+    async performStatisticalTest(dto: StatisticalTestDto): Promise<StatisticalTestResponseDto> {
         return this.pythonService.executePythonScript('statistical_test.py', [dto]);
     }
 
-    async analyzeExtremeCases(dto: any) {
+    async analyzeExtremeCases(dto: ExtremeCaseAnalysisDto): Promise<any> {
         return this.pythonService.executePythonScript('analyze_extreme_cases.py', [dto]);
     }
 
-    async compareWithBenchmark(dto: any) {
+    async compareWithBenchmark(dto: BenchmarkDto): Promise<any> {
         return this.pythonService.executePythonScript('compare_benchmark.py', [dto]);
     }
 }

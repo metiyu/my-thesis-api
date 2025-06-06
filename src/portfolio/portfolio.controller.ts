@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { PortfolioService } from './portfolio.service';
 import { DownloadDataDto } from './dto/download-data.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import { IndividualStockAnalysisDto } from './dto/individual-stock.dto';
 import { OptimizePortfolioDto } from './dto/optimize-portfolio.dto';
 import { EfficientFrontierDto } from './dto/efficient-frontier.dto';
@@ -19,6 +19,7 @@ import { MonteCarloSimulationDto } from './dto/monte-carlo.dto';
 import { StatisticalTestDto } from './dto/statistical-test.dto';
 import { ExtremeCaseAnalysisDto } from './dto/extreme-case.dto';
 import { BenchmarkDto } from './dto/benchmark.dto';
+import { StatisticalTestResponseDto } from './dto/statistical-test-response.dto';
 
 @ApiTags('Portfolio')
 @Controller('portfolio')
@@ -174,29 +175,12 @@ export class PortfolioController {
     @Post('stat-test')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Lakukan uji statistik antar strategi optimasi portofolio' })
-    @ApiResponse({
-        status: 200,
+    @ApiBody({ type: StatisticalTestDto })
+    @ApiOkResponse({
         description: 'Berhasil melakukan uji statistik antar strategi',
-        schema: {
-            example: {
-                statistical_tests: [
-                    {
-                        comparison: "modified_sharpe vs min_cvar",
-                        metric: "mean_return",
-                        p_value: 0.0001,
-                        significant: true,
-                    },
-                    {
-                        comparison: "modified_sharpe vs mean_cvar",
-                        metric: "sharpe_ratio",
-                        p_value: 0.0003,
-                        significant: true,
-                    }
-                ]
-            }
-        }
+        type: StatisticalTestResponseDto,
     })
-    async performStatisticalTest(@Body() dto: StatisticalTestDto) {
+    async performStatisticalTest(@Body() dto: StatisticalTestDto): Promise<StatisticalTestResponseDto> {
         return await this.portfolioService.performStatisticalTest(dto);
     }
 
