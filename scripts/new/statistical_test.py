@@ -109,7 +109,7 @@ if __name__ == '__main__':
             params = json.load(f)
         
         # Get monte carlo results
-        monte_carlo_results = params.get('monteCarloResults', {}).get('simulation_results', [])
+        monte_carlo_results = params.get('monteCarloResults', {})
         
         if not monte_carlo_results:
             raise ValueError("monteCarloResults are required")

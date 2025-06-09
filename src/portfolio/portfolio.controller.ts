@@ -8,6 +8,7 @@ import {
     HttpCode,
     Query,
     Get,
+    UseGuards,
 } from '@nestjs/common';
 import { PortfolioService } from './portfolio.service';
 import { DownloadDataDto } from './dto/download-data.dto';
@@ -20,12 +21,14 @@ import { StatisticalTestDto } from './dto/statistical-test.dto';
 import { ExtremeCaseAnalysisDto } from './dto/extreme-case.dto';
 import { BenchmarkDto } from './dto/benchmark.dto';
 import { StatisticalTestResponseDto } from './dto/statistical-test-response.dto';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @ApiTags('Portfolio')
 @Controller('portfolio')
 export class PortfolioController {
     constructor(private readonly portfolioService: PortfolioService) { }
 
+    @UseGuards(ThrottlerGuard)
     @Post('download')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Download data historis saham' })
@@ -45,6 +48,7 @@ export class PortfolioController {
         return await this.portfolioService.downloadData(dto);
     }
 
+    @UseGuards(ThrottlerGuard)
     @Post('analyze-individual')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Analisis statistik individu tiap saham' })
@@ -76,6 +80,7 @@ export class PortfolioController {
         return await this.portfolioService.analyzeIndividualStocks(dto);
     }
 
+    @UseGuards(ThrottlerGuard)
     @Post('optimize')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Optimasi portofolio menggunakan strategi tertentu' })
@@ -106,6 +111,7 @@ export class PortfolioController {
         return await this.portfolioService.optimizePortfolio(dto);
     }
 
+    @UseGuards(ThrottlerGuard)
     @Post('frontier')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Generate efficient frontier berdasarkan variasi target return' })
@@ -139,6 +145,7 @@ export class PortfolioController {
         return await this.portfolioService.generateEfficientFrontier(dto);
     }
 
+    @UseGuards(ThrottlerGuard)
     @Post('monte-carlo')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Lakukan simulasi Monte Carlo untuk membandingkan strategi optimasi' })
@@ -172,18 +179,43 @@ export class PortfolioController {
         return await this.portfolioService.monteCarloSimulation(dto);
     }
 
+    @UseGuards(ThrottlerGuard)
     @Post('stat-test')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Lakukan uji statistik antar strategi optimasi portofolio' })
     @ApiBody({ type: StatisticalTestDto })
-    @ApiOkResponse({
-        description: 'Berhasil melakukan uji statistik antar strategi',
-        type: StatisticalTestResponseDto,
+    @ApiResponse({
+        status: 200,
+        description: 'Berhasil menjalankan simulasi Monte Carlo',
+        schema: {
+            example: {
+                statistical_tests: [],
+                summary: {
+                    total_comparisons: 0,
+                    significant_comparisons: 0,
+                    strategies_tested: [
+                        "modified_sharpe",
+                        "min_cvar",
+                        "mean_cvar"
+                    ],
+                    metrics_tested: [
+                        "mean_return",
+                        "sharpe_ratio",
+                        "volatility",
+                        "historical_cvar_95"
+                    ],
+                    total_simulations: 3
+                }
+            }
+        },
     })
     async performStatisticalTest(@Body() dto: StatisticalTestDto): Promise<StatisticalTestResponseDto> {
+        console.log('Performing statistical test with DTO:', dto);
+
         return await this.portfolioService.performStatisticalTest(dto);
     }
 
+    @UseGuards(ThrottlerGuard)
     @Post('extreme-cases')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Analisis kasus ekstrem dari hasil simulasi Monte Carlo' })
@@ -193,38 +225,39 @@ export class PortfolioController {
         schema: {
             example: {
                 extreme_cases: {
-                    best_case: {
-                        modified_sharpe: {
-                            mean_return: 0.2917,
-                            volatility: 2.1472,
-                            sharpe_ratio: 0.136,
+                    modified_sharpe: {
+                        best_case: {
+                            mean_return: 0.0009411815444667043,
+                            volatility: 0.021531198857040044,
+                            sharpe_ratio: 0.02208726084783764
                         },
-                        min_cvar: {
-                            mean_return: 0.1894,
-                            volatility: 1.56,
-                            sharpe_ratio: 0.121,
-                        },
+                        worst_case: {
+                            mean_return: 0.0009411815444667043,
+                            volatility: 0.021531198857040044,
+                            sharpe_ratio: 0.02208726084783764
+                        }
                     },
-                    worst_case: {
-                        modified_sharpe: {
-                            mean_return: 0.0913,
-                            volatility: 1.76,
-                            sharpe_ratio: 0.052,
+                    min_cvar: {
+                        best_case: {
+                            mean_return: -0.000027447848121537074,
+                            volatility: 0.013267789481132625,
+                            sharpe_ratio: -0.0010020755638337076
                         },
-                        min_cvar: {
-                            mean_return: 0.0412,
-                            volatility: 1.18,
-                            sharpe_ratio: 0.035,
-                        },
-                    },
-                },
-            },
+                        worst_case: {
+                            mean_return: -0.000027447848121537074,
+                            volatility: 0.013267789481132625,
+                            sharpe_ratio: -0.0010020755638337076
+                        }
+                    }
+                }
+            }
         },
     })
     async analyzeExtremeCases(@Body() dto: ExtremeCaseAnalysisDto) {
         return await this.portfolioService.analyzeExtremeCases(dto);
     }
 
+    @UseGuards(ThrottlerGuard)
     @Get('benchmark')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Bandingkan kinerja portofolio terhadap portofolio benchmark' })
@@ -234,23 +267,11 @@ export class PortfolioController {
         schema: {
             example: {
                 benchmark_performance: {
-                    mean_return: 0.000477,
-                    volatility: 0.0135,
-                    sharpe_ratio: 0.0355,
-                },
-                optimized_performance: {
-                    modified_sharpe: {
-                        mean_return: 0.0012,
-                        volatility: 0.016,
-                        sharpe_ratio: 0.0358,
-                    },
-                    min_cvar: {
-                        mean_return: 0.0005,
-                        volatility: 0.011,
-                        sharpe_ratio: 0.032,
-                    },
-                },
-            },
+                    mean_return: 0.0004779275253219952,
+                    volatility: 0.01347839674086385,
+                    sharpe_ratio: 0.03545878152354819
+                }
+            }
         },
     })
     async compareWithBenchmark(@Query() dto: BenchmarkDto) {

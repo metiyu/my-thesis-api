@@ -8,13 +8,8 @@ import traceback
 
 warnings.filterwarnings("ignore")
 
-def analyze_extreme_cases(monte_carlo_data):
-    if 'simulation_results' in monte_carlo_data:
-        simulation_results = monte_carlo_data['simulation_results']
-    else:
-        simulation_results = monte_carlo_data
-
-    df = pd.DataFrame(simulation_results)
+def analyze_extreme_cases(monte_carlo_results):
+    df = pd.DataFrame(monte_carlo_results)
 
     if df.empty or 'strategy' not in df.columns:
         raise ValueError("Invalid input data")

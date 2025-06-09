@@ -44,6 +44,8 @@ if __name__ == '__main__':
         start_date = params.get('startDate')
         end_date = params.get('endDate')
 
+        print(f"Parameters: tickers={tickers}, startDate={start_date}, endDate={end_date}", file=sys.stderr)  # Debug log
+
         if not tickers or not start_date or not end_date:
             raise ValueError("tickers, startDate, and endDate are required")
 
