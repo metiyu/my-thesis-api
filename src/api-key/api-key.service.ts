@@ -25,9 +25,9 @@ export class ApiKeyService {
             const data = await fs.readFile(this.DB_PATH, 'utf-8');
             const parsed = JSON.parse(data);
             this.keysByEmail = new Map(Object.entries(parsed));
-            this.logger.log('[ApiKeyService] Loaded keys from db.json');
+            this.logger.log(`[ApiKeyService] Loaded keys from ${this.DB_PATH}`);
         } catch (err) {
-            this.logger.error('[ApiKeyService] Failed to load db.json', err);
+            this.logger.error(`[ApiKeyService] Failed to load db.json from ${this.DB_PATH}`, err);
         }
     }
 

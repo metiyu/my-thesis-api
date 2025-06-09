@@ -4,15 +4,36 @@ import { ApiKeyService } from './api-key.service';
 
 @Injectable()
 export class ApiKeyMiddleware implements NestMiddleware {
-    constructor(private readonly apiKeyService: ApiKeyService) { }
+    constructor(private readonly apiKeyService: ApiKeyService) {
+        console.log('[ApiKeyMiddleware] Constructor called');
+        if (!apiKeyService) {
+            console.error('[ApiKeyMiddleware] apiKeyService is undefined!');
+        }
+    }
 
     use(req: Request, res: Response, next: NextFunction) {
-        const skipPaths = ['/auth/get-key-form', '/auth/generate-key', '/api-json', '/api/swagger-ui'];
+        
+        // Define routes that should skip API key check
+        const skipPaths = [
+            '/',
+            '/auth/get-key-form',
+            '/auth/generate-key',
+            '/api-json',
+            '/api/swagger-ui',
+        ];
 
-        if (skipPaths.some(path => req.url.startsWith(path))) {
+        // Better matching logic
+        const shouldSkip = skipPaths.some(path =>
+            req.url === path || req.url.startsWith(`${path}?`) || req.url.startsWith(`${path}/`)
+        );
+
+        console.log(`[ApiKeyMiddleware] URL: ${req.url}, Skipping: ${shouldSkip}`);
+
+        if (shouldSkip) {
             return next();
         }
 
+        // Check API key in header or cookie
         const apiKeyFromHeader = req.headers['x-api-key'] as string;
         const apiKeyFromCookie = req.cookies?.['x-api-key'];
 

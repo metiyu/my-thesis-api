@@ -3,35 +3,28 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json } from 'express';
-import { ApiKeyService } from './api-key/api-key.service';
-import { ApiKeyMiddleware } from './api-key/api-key.middleware';
+import { Request, Response } from 'express';
 import * as express from 'express';
 import * as cookieParser from 'cookie-parser';
 import { join } from 'path';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
-    
+
     app.use(json({ limit: '50mb' }));
-    
+
     app.useGlobalPipes(new ValidationPipe({
         transform: true,
         whitelist: true,
         skipMissingProperties: false,
     }));
 
-     // Parse cookies
+    // Parse cookies
     app.use(cookieParser());
 
     // Serve static files
     // app.use('/static', express.static(join(__dirname, '..', 'public')));
     app.use(express.static(join(__dirname, '..', 'public')));
-
-    // Get the API key service instance
-    const apiKeyService = app.get(ApiKeyService);
-
-    // Apply API key middleware globally
-    app.use(new (require('./api-key/api-key.middleware').ApiKeyMiddleware)(apiKeyService).use);
 
     const config = new DocumentBuilder()
         .setTitle('Stock Market Analysis API')
