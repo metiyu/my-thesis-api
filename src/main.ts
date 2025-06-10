@@ -1,74 +1,109 @@
+// src/main.ts - Updated for Render (API-only)
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { json } from 'express';
-import { Request, Response } from 'express';
-import * as express from 'express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import * as cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { join } from 'path';
-import { ApiKeyService } from './api-key/api-key.service';
+import { Request, Response } from 'express';
 
 async function bootstrap() {
-    const logger = new Logger('Bootstrap');
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-    // Apply global middleware BEFORE other configurations
-    app.use(json({ limit: '50mb' }));
-    app.use(cookieParser()); // Cookie parser MUST be before your middleware
-
-    app.useGlobalPipes(new ValidationPipe({
-        transform: true,
-        whitelist: true,
-        skipMissingProperties: false,
+    // Security - Relaxed CSP for Swagger UI
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+                imgSrc: ["'self'", "data:", "https:"],
+                fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            },
+        },
     }));
 
-    // Serve static files
-    app.use(express.static(join(__dirname, '..', 'public')));
-
-    // Get the API key service to validate keys for Swagger
-    const apiKeyService = app.get(ApiKeyService);
-    await apiKeyService.ensureReady();
-
-    // Custom middleware to protect Swagger routes
-    app.use('/api*', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        logger.log(`[SwaggerProtection] Protecting Swagger route: ${req.url}`);
-
-        // Check API key in header or cookie
-        const apiKeyFromHeader = req.headers['x-api-key'] as string;
-        const apiKeyFromCookie = req.cookies?.['x-api-key'];
-        const apiKey = apiKeyFromHeader || apiKeyFromCookie;
-
-        logger.log(`[SwaggerProtection] API Key check - Header: ${!!apiKeyFromHeader}, Cookie: ${!!apiKeyFromCookie}`);
-
-        if (!apiKey || typeof apiKey !== 'string') {
-            logger.log('[SwaggerProtection] No API key found, redirecting to form');
-            return res.redirect('/auth/get-key-form');
-        }
-
-        const isValid = await apiKeyService.isValidApiKey(apiKey);
-        if (!isValid) {
-            logger.log('[SwaggerProtection] Invalid API key, redirecting to form');
-            res.clearCookie('x-api-key');
-            return res.redirect('/auth/get-key-form');
-        }
-
-        logger.log('[SwaggerProtection] Valid API key, allowing access to Swagger');
-        next();
+    // CORS - Allow all origins since it's an API service
+    app.enableCors({
+        origin: true, // Allow all origins for API access
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
     });
 
-    // Setup Swagger AFTER protection middleware
+    // Middleware
+    app.use(cookieParser());
+    app.useGlobalPipes(new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+    }));
+
+    // Static files (for your auth form and images)
+    app.useStaticAssets(join(__dirname, '..', 'public'), {
+        prefix: '/public/',
+    });
+
+    // Health check endpoint (important for Render)
+    app.getHttpAdapter().get('/health', (req: Request, res: Response) => {
+        res.status(200).json({
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            environment: process.env.NODE_ENV,
+        });
+    });
+
+    // Root redirect to API docs
+    app.getHttpAdapter().get('/', (req: Request, res: Response) => {
+        res.redirect('/api');
+    });
+
+    // Swagger setup - Always enabled for API documentation
     const config = new DocumentBuilder()
-        .setTitle('Stock Market Analysis API')
-        .setDescription('Stock Portfolio Optimization on LQ45 Index Using Historical VaR and Non-Parametric CVaR')
+        .setTitle('My Thesis API')
+        .setDescription('Portfolio optimization API with Python-powered analytics')
         .setVersion('1.0')
+        .addServer('/', 'Production server')
+        .addApiKey({
+            type: 'apiKey',
+            name: 'x-api-key',
+            in: 'header',
+            description: 'API key for authentication'
+        }, 'api-key')
+        .addTag('Portfolio', 'Portfolio optimization endpoints')
+        .addTag('Auth', 'Authentication endpoints')
         .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('api', app, document, {
+        customSiteTitle: 'My Thesis API Documentation',
+        customfavIcon: '/public/favicon.ico',
+        customCss: `
+            .swagger-ui .topbar { display: none }
+            .swagger-ui .info .title { color: #2c3e50; }
+        `,
+        swaggerOptions: {
+            persistAuthorization: true,
+            displayRequestDuration: true,
+        },
+    });
 
-    const port = process.env.PORT ?? 3000;
-    await app.listen(port);
-    logger.log(`Application is running on: http://localhost:${port}`);
+    // Important: Render uses PORT environment variable
+    const port = process.env.PORT || 3000;
+
+    // Bind to 0.0.0.0 for Render
+    await app.listen(port, '0.0.0.0');
+
+    console.log(`🚀 Application is running on: http://0.0.0.0:${port}`);
+    console.log(`📚 API Documentation: http://0.0.0.0:${port}/api`);
+    console.log(`🔑 API Key Form: http://0.0.0.0:${port}/auth/get-key-form`);
+    console.log(`📊 Health Check: http://0.0.0.0:${port}/health`);
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+    console.error('❌ Error starting the application:', error);
+    process.exit(1);
+});

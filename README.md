@@ -97,3 +97,87 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+```
+my-thesis-api
+├─ .eslintrc.js
+├─ .prettierrc
+├─ api-keys-db.json
+├─ nest-cli.json
+├─ package-lock.json
+├─ package.json
+├─ public
+│  ├─ api-key-form.html
+│  └─ image.png
+├─ README.md
+├─ requirements.txt
+├─ scripts
+│  ├─ !!prethesis (1) copy.ipynb
+│  ├─ analyze_stocks.py
+│  ├─ calculate_portfolio_metrics.py
+│  ├─ dataset
+│  │  ├─ consistent_lq45_stocks.csv
+│  │  └─ summary.csv
+│  ├─ download_returns.py
+│  ├─ efficient_frontier.py
+│  ├─ get_stock.py
+│  ├─ individual_stock_analysis.py
+│  ├─ monte_carlo_simulation.py
+│  ├─ new
+│  │  ├─ analyze_extreme_cases.py
+│  │  ├─ analyze_individual_stocks.py
+│  │  ├─ compare_benchmark.py
+│  │  ├─ download_data.py
+│  │  ├─ generate_efficient_frontier.py
+│  │  ├─ monte_carlo_simulation.py
+│  │  ├─ optimize_portfolio.py
+│  │  ├─ statistical_test.py
+│  │  └─ test_input.py
+│  ├─ optimize_portfolio.py
+│  └─ prethesis (1).ipynb
+├─ src
+│  ├─ api-key
+│  │  ├─ ap-keys-db.json
+│  │  ├─ api-key.middleware.spec.ts
+│  │  ├─ api-key.middleware.ts
+│  │  ├─ api-key.module.ts
+│  │  ├─ api-key.service.spec.ts
+│  │  └─ api-key.service.ts
+│  ├─ app.controller.spec.ts
+│  ├─ app.controller.ts
+│  ├─ app.module.ts
+│  ├─ app.service.ts
+│  ├─ auth
+│  │  ├─ auth.controller.spec.ts
+│  │  ├─ auth.controller.ts
+│  │  └─ auth.module.ts
+│  ├─ main.ts
+│  ├─ portfolio
+│  │  ├─ dto
+│  │  │  ├─ benchmark.dto.ts
+│  │  │  ├─ download-data.dto.ts
+│  │  │  ├─ efficient-frontier.dto.ts
+│  │  │  ├─ export-result.dto.ts
+│  │  │  ├─ extreme-case.dto.ts
+│  │  │  ├─ individual-stock.dto.ts
+│  │  │  ├─ monte-carlo-simulation-result.dto.ts
+│  │  │  ├─ monte-carlo.dto.ts
+│  │  │  ├─ optimize-portfolio.dto.ts
+│  │  │  ├─ statistical-test-response.dto.ts
+│  │  │  └─ statistical-test.dto.ts
+│  │  ├─ portfolio.controller.ts
+│  │  └─ portfolio.service.ts
+│  ├─ python
+│  │  └─ python.service.ts
+│  └─ test
+│     ├─ test.controller.spec.ts
+│     ├─ test.controller.ts
+│     └─ test.module.ts
+├─ temp
+├─ test
+│  ├─ app.e2e-spec.ts
+│  └─ jest-e2e.json
+├─ tsconfig.build.json
+└─ tsconfig.json
+
+```
