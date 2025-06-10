@@ -210,8 +210,6 @@ export class PortfolioController {
         },
     })
     async performStatisticalTest(@Body() dto: StatisticalTestDto): Promise<StatisticalTestResponseDto> {
-        console.log('Performing statistical test with DTO:', dto);
-
         return await this.portfolioService.performStatisticalTest(dto);
     }
 

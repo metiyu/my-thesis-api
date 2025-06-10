@@ -7,9 +7,15 @@ import { PortfolioController } from './portfolio/portfolio.controller';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { AuthController } from './auth/auth.controller';
+import { AuthModule } from './auth/auth.module';
+import { TestController } from './test/test.controller';
+import { TestModule } from './test/test.module';
 
 @Module({
   imports: [
+    ApiKeyModule,
+    AuthModule,
+    TestModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -18,9 +24,8 @@ import { AuthController } from './auth/auth.controller';
         },
       ],
     }),
-    ApiKeyModule,
   ],
-  controllers: [AppController, PortfolioController, AuthController],
+  controllers: [AppController, PortfolioController, AuthController, TestController],
   providers: [
     PythonService,
     AppService,

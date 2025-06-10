@@ -1,82 +1,91 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 
 @Injectable()
-export class ApiKeyService {
-    private readonly DB_PATH = join(
-        process.cwd(),
-        process.env.NODE_ENV === 'production' ? 'dist' : 'src',
-        'api-key',
-        'db.json'
-    );
+export class ApiKeyService implements OnModuleInit {
+    private readonly DB_PATH = join(process.cwd(), 'api-keys-db.json');
     private keysByEmail: Map<string, string> = new Map();
     private readonly logger = new Logger(ApiKeyService.name);
+    private isReady = false;
 
-    constructor() {
-        this.loadDb();
+    async onModuleInit() {
+        this.logger.log('[ApiKeyService] Initializing...');
+        await this.loadDb();
+        this.isReady = true;
+        this.logger.log('[ApiKeyService] Ready!');
     }
 
-    /**
-     * Load existing keys from db.json into memory
-     */
-    async loadDb(): Promise<void> {
-        try {
-            const data = await fs.readFile(this.DB_PATH, 'utf-8');
-            const parsed = JSON.parse(data);
-            this.keysByEmail = new Map(Object.entries(parsed));
-            this.logger.log(`[ApiKeyService] Loaded keys from ${this.DB_PATH}`);
-        } catch (err) {
-            this.logger.error(`[ApiKeyService] Failed to load db.json from ${this.DB_PATH}`, err);
+    async ensureReady(): Promise<void> {
+        if (!this.isReady) {
+            await this.loadDb();
+            this.isReady = true;
         }
     }
 
-    /**
-     * Save current keys from memory to db.json
-     */
+    async loadDb(): Promise<void> {
+        try {
+            await fs.access(this.DB_PATH);
+            const data = await fs.readFile(this.DB_PATH, 'utf-8');
+            const parsed = JSON.parse(data);
+            this.keysByEmail = new Map(Object.entries(parsed));
+            this.logger.log(`[ApiKeyService] Loaded ${this.keysByEmail.size} keys from database`);
+        } catch (err) {
+            if (err.code === 'ENOENT') {
+                this.logger.log(`[ApiKeyService] Database file not found, creating new one`);
+                this.keysByEmail = new Map();
+                await this.saveDb();
+            } else {
+                this.logger.error(`[ApiKeyService] Error loading database:`, err);
+                this.keysByEmail = new Map();
+            }
+        }
+    }
+
     async saveDb(): Promise<void> {
-        const obj = Object.fromEntries(this.keysByEmail);
-        await fs.writeFile(this.DB_PATH, JSON.stringify(obj, null, 2), 'utf-8');
+        try {
+            const obj = Object.fromEntries(this.keysByEmail);
+            await fs.writeFile(this.DB_PATH, JSON.stringify(obj, null, 2), 'utf-8');
+            this.logger.log(`[ApiKeyService] Database saved with ${this.keysByEmail.size} keys`);
+        } catch (err) {
+            this.logger.error(`[ApiKeyService] Error saving database:`, err);
+        }
     }
 
-    /**
-     * Check if an API key exists
-     */
-    isValidApiKey(apiKey: string): boolean {
-        return Array.from(this.keysByEmail.values()).includes(apiKey);
+    async isValidApiKey(apiKey: string): Promise<boolean> {
+        await this.ensureReady();
+        const isValid = Array.from(this.keysByEmail.values()).includes(apiKey);
+        this.logger.log(`[ApiKeyService] Validating API key: ${isValid ? 'VALID' : 'INVALID'}`);
+        return isValid;
     }
 
-    /**
-     * Get API key by email
-     */
-    getKeyByEmail(email: string): string | undefined {
+    async getKeyByEmail(email: string): Promise<string | undefined> {
+        await this.ensureReady();
         return this.keysByEmail.get(email);
     }
 
-    /**
-     * Generate or retrieve API key for an email
-     */
     async generateOrGetApiKey(email: string): Promise<string> {
+        await this.ensureReady();
+
         const existingKey = this.keysByEmail.get(email);
-        if (existingKey) return existingKey;
+        if (existingKey) {
+            this.logger.log(`[ApiKeyService] Returning existing key for: ${email}`);
+            return existingKey;
+        }
 
         const newKey = this.generateRandomKey();
         this.keysByEmail.set(email, newKey);
-        await this.saveDb(); // Persist to file
+        await this.saveDb();
+        this.logger.log(`[ApiKeyService] Generated new key for: ${email}`);
         return newKey;
     }
 
-    /**
-     * Generate a random API key
-     */
     private generateRandomKey(): string {
-        return require('crypto').randomBytes(20).toString('hex');
+        return require('crypto').randomBytes(32).toString('hex');
     }
 
-    /**
-     * Get all keys (for debugging)
-     */
-    getAllKeys(): Record<string, string> {
+    async getAllKeys(): Promise<Record<string, string>> {
+        await this.ensureReady();
         return Object.fromEntries(this.keysByEmail);
     }
 }
